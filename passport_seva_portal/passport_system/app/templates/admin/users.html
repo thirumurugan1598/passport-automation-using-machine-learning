@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — Admin Panel{% endblock %}
+{% block content %}
+
+<div class="page-header admin-header">
+    <div class="page-header-inner">
+        <div>
+            <div class="role-badge">🛡️ Admin</div>
+            <h1>User Management</h1>
+            <p>Registered citizens and officers</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn-outline">← Dashboard</a>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Applications</th>
+                    <th>Registered</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td class="text-muted">#{{ user['id'] }}</td>
+                    <td><strong>{{ user['full_name'] }}</strong></td>
+                    <td>{{ user['email'] }}</td>
+                    <td>{{ user['phone'] }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-green' if user['role']=='admin' else 'badge-blue' if user['role']=='police' else 'badge-gray' }}">
+                            {{ '🛡️ Admin' if user['role']=='admin' else '👮 Police' if user['role']=='police' else '👤 Citizen' }}
+                        </span>
+                    </td>
+                    <td>{{ user['app_count'] }}</td>
+                    <td class="text-muted">{{ user['created_at'][:10] }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-green' if user['is_active'] else 'badge-red' }}">
+                            {{ 'Active' if user['is_active'] else 'Inactive' }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

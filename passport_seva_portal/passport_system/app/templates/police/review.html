@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Review Application — Police Portal{% endblock %}
+{% block content %}
+
+<div class="page-header police-header">
+    <div class="page-header-inner">
+        <div>
+            <div class="role-badge">👮 Police Verification</div>
+            <h1>Application Review</h1>
+            <p>{{ application['application_number'] }}</p>
+        </div>
+        <a href="{{ url_for('police.dashboard') }}" class="btn-outline">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="review-container">
+    <div class="review-left">
+        <!-- Applicant Details -->
+        <div class="detail-card">
+            <h3>Applicant Information</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>Full Name</span><strong>{{ application['applicant_name'] }}</strong></div>
+                <div class="info-row"><span>Date of Birth</span><strong>{{ application['dob'] }}</strong></div>
+                <div class="info-row"><span>Gender</span><strong>{{ application['gender'] }}</strong></div>
+                <div class="info-row"><span>Address</span><strong>{{ application['address'] }}, {{ application['city'] }}, {{ application['state'] }} - {{ application['pincode'] }}</strong></div>
+                <div class="info-row"><span>Father's Name</span><strong>{{ application['father_name'] }}</strong></div>
+                <div class="info-row"><span>Mother's Name</span><strong>{{ application['mother_name'] }}</strong></div>
+                {% if application['spouse_name'] %}
+                <div class="info-row"><span>Spouse</span><strong>{{ application['spouse_name'] }}</strong></div>
+                {% endif %}
+                <div class="info-row"><span>Aadhaar</span><strong>{{ application['aadhaar'][:4] }}XXXX{{ application['aadhaar'][-4:] }}</strong></div>
+                <div class="info-row"><span>Contact</span><strong>{{ application['phone'] }}</strong></div>
+                <div class="info-row"><span>Email</span><strong>{{ application['email'] }}</strong></div>
+            </div>
+        </div>
+
+        <!-- ML Results -->
+        {% for log in logs %}
+        {% if log['verification_type'] == 'ml_auto' %}
+        <div class="detail-card ml-card {{ 'ml-pass' if log['result'] else 'ml-fail' }}">
+            <h3>🤖 ML Verification Results</h3>
+            <div class="ml-overall">
+                <div class="ml-score-circle {{ 'pass' if log['result'] else 'fail' }}">
+                    <div class="msc-value">{{ "%.0f"|format(log['confidence_score'] * 100) }}</div>
+                    <div class="msc-label">%</div>
+                </div>
+                <div class="ml-verdict">
+                    <strong>{{ '✅ ML Passed' if log['result'] else '⚠️ ML Flagged for Review' }}</strong>
+                    <p>Confidence: {{ "%.4f"|format(log['confidence_score']) }}</p>
+                </div>
+            </div>
+            <div class="ml-scores-grid">
+                <div class="ml-score-item">
+                    <div class="msi-label">Face Match</div>
+                    <div class="msi-bar"><div class="msi-fill" style="width:{{ "%.0f"|format(log['face_match_score']*100 if log['face_match_score'] else 0) }}%"></div></div>
+                    <div class="msi-val">{{ "%.1f"|format(log['face_match_score']*100 if log['face_match_score'] else 0) }}%</div>
+                </div>
+                <div class="ml-score-item">
+                    <div class="msi-label">Document Validity</div>
+                    <div class="msi-bar"><div class="msi-fill" style="width:{{ "%.0f"|format(log['document_validity_score']*100 if log['document_validity_score'] else 0) }}%"></div></div>
+                    <div class="msi-val">{{ "%.1f"|format(log['document_validity_score']*100 if log['document_validity_score'] else 0) }}%</div>
+                </div>
+                <div class="ml-score-item">
+                    <div class="msi-label">Aadhaar Match</div>
+                    <div class="msi-bar"><div class="msi-fill" style="width:{{ "%.0f"|format(log['aadhaar_match_score']*100 if log['aadhaar_match_score'] else 0) }}%"></div></div>
+                    <div class="msi-val">{{ "%.1f"|format(log['aadhaar_match_score']*100 if log['aadhaar_match_score'] else 0) }}%</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Documents -->
+        {% if documents %}
+        <div class="detail-card">
+            <h3>Submitted Documents</h3>
+            <div class="docs-grid">
+                {% for doc in documents %}
+                <div class="doc-item">
+                    <div class="doc-item-icon">{% if doc['doc_type']=='photo' %}🤳{% elif doc['doc_type']=='aadhaar_doc' %}🪪{% elif doc['doc_type']=='address_proof' %}🏠{% else %}📜{% endif %}</div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name">{{ doc['doc_type'].replace('_',' ').title() }}</div>
+                        <div class="doc-item-file">{{ doc['original_filename'] }}</div>
+                    </div>
+                    <div class="doc-item-status">✅</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Decision Panel -->
+    <div class="review-right">
+        <div class="decision-card">
+            <h3>Police Verification Decision</h3>
+            <p>Review all information and ML results before making your decision.</p>
+
+            <form method="POST" action="{{ url_for('police.verify', app_id=application['id']) }}" class="decision-form">
+                <div class="form-group">
+                    <label>Verification Remarks</label>
+                    <textarea name="remarks" class="form-textarea" rows="5"
+                              placeholder="Enter your verification remarks, observations, and findings..."></textarea>
+                </div>
+
+                <div class="decision-checklist">
+                    <h4>Verification Checklist</h4>
+                    <label class="check-item">
+                        <input type="checkbox" class="verify-check"> Identity verified in person
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" class="verify-check"> Address confirmed
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" class="verify-check"> No criminal record found
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" class="verify-check"> Documents appear genuine
+                    </label>
+                </div>
+
+                <div class="decision-actions">
+                    <button type="submit" name="decision" value="approve"
+                            class="btn-decision btn-approve"
+                            onclick="return confirm('Approve this application and forward to Admin?')">
+                        ✅ Approve & Forward to Admin
+                    </button>
+                    <button type="submit" name="decision" value="reject"
+                            class="btn-decision btn-reject"
+                            onclick="return confirmReject()">
+                        ❌ Reject Application
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="detail-card">
+            <h3>Application Info</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>App Number</span><strong>{{ application['application_number'] }}</strong></div>
+                <div class="info-row"><span>Type</span><strong>{{ application['passport_type'] }}</strong></div>
+                <div class="info-row"><span>Tatkaal</span><strong>{{ '⚡ Yes' if application['tatkaal'] else 'No' }}</strong></div>
+                <div class="info-row"><span>Applied On</span><strong>{{ application['created_at'][:10] }}</strong></div>
+                <div class="info-row"><span>Current Status</span>
+                    <strong class="status-{{ application['status'] }}">{{ application['status'].replace('_',' ').title() }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function confirmReject() {
+    const remarks = document.querySelector('textarea[name="remarks"]').value.trim();
+    if (!remarks) {
+        alert('Please enter rejection remarks before rejecting.');
+        return false;
+    }
+    return confirm('Are you sure you want to REJECT this application? This cannot be undone.');
+}
+</script>
+{% endblock %}

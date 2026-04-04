@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Passport Seva Portal — Home{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-inner">
+        <div class="hero-content">
+            <div class="hero-badge">🇮🇳 Ministry of External Affairs</div>
+            <h1 class="hero-title">
+                Passport Seva Portal
+                <span class="hero-title-hindi">पासपोर्ट सेवा पोर्टल</span>
+            </h1>
+            <p class="hero-subtitle">Apply for your Indian Passport online — fast, secure, and paperless. Powered by AI-based document verification.</p>
+            <div class="hero-actions">
+                {% if session.get('user_id') and session.get('role') == 'citizen' %}
+                    <a href="{{ url_for('citizen.apply') }}" class="btn-primary-lg">Apply for Passport</a>
+                    <a href="{{ url_for('citizen.dashboard') }}" class="btn-outline-lg">My Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn-primary-lg">Get Started</a>
+                    <a href="{{ url_for('main.track') }}" class="btn-outline-lg">Track Application</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="passport-card">
+                <div class="pp-stripe"></div>
+                <div class="pp-header">
+                    <span>REPUBLIC OF INDIA</span>
+                    <div class="pp-emblem">☸</div>
+                    <span>भारत गणराज्य</span>
+                </div>
+                <div class="pp-body">
+                    <div class="pp-title">PASSPORT</div>
+                    <div class="pp-subtitle">पासपोर्ट</div>
+                    <div class="pp-photo-area"></div>
+                    <div class="pp-details">
+                        <div class="pp-field"><span>Surname / उपनाम</span><strong>CITIZEN</strong></div>
+                        <div class="pp-field"><span>Given Names / दिया गया नाम</span><strong>INDIAN</strong></div>
+                        <div class="pp-field pp-field-row">
+                            <div><span>Nationality / राष्ट्रीयता</span><strong>INDIAN</strong></div>
+                            <div><span>Type / प्रकार</span><strong>P</strong></div>
+                        </div>
+                    </div>
+                    <div class="pp-mrz">
+                        <div class="pp-mrz-line">P&lt;INDCITIZEN&lt;&lt;INDIAN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+                        <div class="pp-mrz-line">A1234567&lt;8IND7001014M3112315&lt;&lt;&lt;&lt;&lt;&lt;2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar">
+    <div class="stats-inner">
+        <div class="stat-item">
+            <div class="stat-number">{{ stats.total_applications }}</div>
+            <div class="stat-label">Applications Filed</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">{{ stats.issued }}</div>
+            <div class="stat-label">Passports Issued</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">{{ stats.processing }}</div>
+            <div class="stat-label">In Processing</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">3–5</div>
+            <div class="stat-label">Working Days</div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="services">
+    <div class="section-inner">
+        <div class="section-header">
+            <h2>Our Services</h2>
+            <p>Complete passport lifecycle management — from application to delivery</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">📋</div>
+                <h3>Fresh Passport</h3>
+                <p>Apply for your first Indian passport with complete online documentation and biometric submission.</p>
+                <div class="service-tag">Regular | Tatkaal</div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🔄</div>
+                <h3>Passport Renewal</h3>
+                <p>Renew your expired or soon-to-expire passport quickly through our streamlined online process.</p>
+                <div class="service-tag">30-Day Processing</div>
+            </div>
+            <div class="service-card featured">
+                <div class="service-icon">🤖</div>
+                <h3>AI Verification</h3>
+                <p>ML-powered document verification with face matching and Aadhaar validation for instant processing.</p>
+                <div class="service-tag">Automated | Secure</div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🔍</div>
+                <h3>Status Tracking</h3>
+                <p>Real-time tracking of your application status from submission to passport delivery.</p>
+                <div class="service-tag">24/7 Available</div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">👮</div>
+                <h3>Police Verification</h3>
+                <p>Transparent police background verification with officer-specific case management.</p>
+                <div class="service-tag">Verified Officers</div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">⚡</div>
+                <h3>Tatkaal Service</h3>
+                <p>Express passport processing for urgent travel needs with priority handling.</p>
+                <div class="service-tag">3 Working Days</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Process Flow -->
+<section class="process">
+    <div class="section-inner">
+        <div class="section-header">
+            <h2>Application Process</h2>
+            <p>Your passport in 6 simple steps</p>
+        </div>
+        <div class="process-flow">
+            <div class="process-step">
+                <div class="step-number">01</div>
+                <div class="step-icon">👤</div>
+                <h4>Register & Apply</h4>
+                <p>Create account, fill application form</p>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-number">02</div>
+                <div class="step-icon">📎</div>
+                <h4>Upload Documents</h4>
+                <p>Photo, Aadhaar, address proof</p>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-number">03</div>
+                <div class="step-icon">🤖</div>
+                <h4>ML Verification</h4>
+                <p>Automated AI document check</p>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-number">04</div>
+                <div class="step-icon">👮</div>
+                <h4>Police Check</h4>
+                <p>Background verification</p>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-number">05</div>
+                <div class="step-icon">✅</div>
+                <h4>Admin Approval</h4>
+                <p>Final officer review</p>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-number">06</div>
+                <div class="step-icon">🛂</div>
+                <h4>Passport Issued</h4>
+                <p>Delivered to your address</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+{% if not session.get('user_id') %}
+<section class="cta-section">
+    <div class="cta-inner">
+        <h2>Ready to Apply?</h2>
+        <p>Register now and start your passport application today. It takes less than 10 minutes.</p>
+        <div class="cta-actions">
+            <a href="{{ url_for('auth.register') }}" class="btn-primary-lg">Create Account</a>
+            <a href="{{ url_for('auth.login') }}" class="btn-ghost-lg">Already Registered? Login</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

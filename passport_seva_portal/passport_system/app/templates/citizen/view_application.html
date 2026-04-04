@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Application Details — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div class="page-header-inner">
+        <div>
+            <h1>Application Details</h1>
+            <p class="app-no-display">{{ application['application_number'] }}</p>
+        </div>
+        <div class="app-status-badge status-{{ application['status'] }} lg">
+            {% set sm = {'submitted':'📤 Submitted','ml_verified':'🤖 ML Verified','ml_failed':'⚠️ Under Review','police_approved':'👮 Police Approved','police_rejected':'❌ Police Rejected','issued':'✅ Passport Issued','admin_rejected':'❌ Application Rejected'} %}
+            {{ sm.get(application['status'], application['status'].replace('_',' ').title()) }}
+        </div>
+    </div>
+</div>
+
+<div class="detail-container">
+    <!-- Status Timeline -->
+    <div class="detail-card">
+        <h3>Application Progress</h3>
+        <div class="full-timeline">
+            {% set steps = [
+                ('submitted','📤','Application Submitted','Your application has been received.'),
+                ('ml_verified','🤖','ML Verification','AI-powered document verification complete.'),
+                ('police_approved','👮','Police Verification','Background check by police officer.'),
+                ('issued','✅','Passport Issued','Your passport has been dispatched.')
+            ] %}
+            {% set st = application['status'] %}
+            {% for sts, icon, label, desc in steps %}
+            {% set is_done = (
+                (sts == 'submitted') or
+                (sts == 'ml_verified' and st not in ['submitted']) or
+                (sts == 'police_approved' and st in ['police_approved','issued']) or
+                (sts == 'issued' and st == 'issued')
+            ) %}
+            <div class="ftl-step {{ 'done' if is_done }}">
+                <div class="ftl-icon">{{ icon }}</div>
+                <div class="ftl-content">
+                    <div class="ftl-label">{{ label }}</div>
+                    <div class="ftl-desc">{{ desc }}</div>
+                </div>
+                <div class="ftl-check">{{ '✓' if is_done }}</div>
+            </div>
+            {% if not loop.last %}<div class="ftl-line {{ 'done' if is_done }}"></div>{% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="detail-two-col">
+        <!-- Personal Info -->
+        <div class="detail-card">
+            <h3>Personal Information</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>Full Name</span><strong>{{ application['applicant_name'] }}</strong></div>
+                <div class="info-row"><span>Date of Birth</span><strong>{{ application['dob'] }}</strong></div>
+                <div class="info-row"><span>Gender</span><strong>{{ application['gender'] }}</strong></div>
+                <div class="info-row"><span>Nationality</span><strong>{{ application['nationality'] }}</strong></div>
+                <div class="info-row"><span>Address</span><strong>{{ application['address'] }}, {{ application['city'] }}, {{ application['state'] }} - {{ application['pincode'] }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Passport Info -->
+        <div class="detail-card">
+            <h3>Passport Details</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>Type</span><strong>{{ application['passport_type'] }}</strong></div>
+                <div class="info-row"><span>Tatkaal</span><strong>{{ '⚡ Yes' if application['tatkaal'] else 'No' }}</strong></div>
+                {% if application['existing_passport'] %}
+                <div class="info-row"><span>Existing Passport</span><strong>{{ application['existing_passport'] }}</strong></div>
+                {% endif %}
+                {% if application['passport_number'] %}
+                <div class="info-row highlight"><span>🛂 Passport Number</span><strong>{{ application['passport_number'] }}</strong></div>
+                <div class="info-row"><span>Issued On</span><strong>{{ application['passport_issued_at'][:10] if application['passport_issued_at'] }}</strong></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ML Verification Results -->
+    {% for log in logs %}
+    {% if log['verification_type'] == 'ml_auto' %}
+    <div class="detail-card ml-card {{ 'ml-pass' if log['result'] else 'ml-fail' }}">
+        <h3>🤖 ML Verification Results</h3>
+        <div class="ml-overall">
+            <div class="ml-score-circle {{ 'pass' if log['result'] else 'fail' }}">
+                <div class="msc-value">{{ "%.0f"|format(log['confidence_score'] * 100) }}</div>
+                <div class="msc-label">%</div>
+            </div>
+            <div class="ml-verdict">
+                <div class="ml-verdict-text {{ 'pass' if log['result'] else 'fail' }}">
+                    {{ '✅ Verification Passed' if log['result'] else '⚠️ Requires Manual Review' }}
+                </div>
+                <div class="ml-verdict-sub">Confidence Score: {{ "%.2f"|format(log['confidence_score']) }}</div>
+            </div>
+        </div>
+        <div class="ml-scores-grid">
+            <div class="ml-score-item">
+                <div class="msi-label">Face Match</div>
+                <div class="msi-bar">
+                    <div class="msi-fill" style="width: {{ "%.0f"|format(log['face_match_score'] * 100 if log['face_match_score'] else 0) }}%"></div>
+                </div>
+                <div class="msi-val">{{ "%.1f"|format(log['face_match_score'] * 100 if log['face_match_score'] else 0) }}%</div>
+            </div>
+            <div class="ml-score-item">
+                <div class="msi-label">Document Validity</div>
+                <div class="msi-bar">
+                    <div class="msi-fill" style="width: {{ "%.0f"|format(log['document_validity_score'] * 100 if log['document_validity_score'] else 0) }}%"></div>
+                </div>
+                <div class="msi-val">{{ "%.1f"|format(log['document_validity_score'] * 100 if log['document_validity_score'] else 0) }}%</div>
+            </div>
+            <div class="ml-score-item">
+                <div class="msi-label">Aadhaar Match</div>
+                <div class="msi-bar">
+                    <div class="msi-fill" style="width: {{ "%.0f"|format(log['aadhaar_match_score'] * 100 if log['aadhaar_match_score'] else 0) }}%"></div>
+                </div>
+                <div class="msi-val">{{ "%.1f"|format(log['aadhaar_match_score'] * 100 if log['aadhaar_match_score'] else 0) }}%</div>
+            </div>
+        </div>
+        <div class="ml-time">Verified at: {{ log['verified_at'][:16] }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Documents -->
+    {% if documents %}
+    <div class="detail-card">
+        <h3>Uploaded Documents</h3>
+        <div class="docs-grid">
+            {% for doc in documents %}
+            <div class="doc-item">
+                <div class="doc-item-icon">
+                    {% if doc['doc_type'] == 'photo' %}🤳{% elif doc['doc_type'] == 'aadhaar_doc' %}🪪{% elif doc['doc_type'] == 'address_proof' %}🏠{% else %}📜{% endif %}
+                </div>
+                <div class="doc-item-info">
+                    <div class="doc-item-name">{{ doc['doc_type'].replace('_',' ').title() }}</div>
+                    <div class="doc-item-file">{{ doc['original_filename'] }}</div>
+                </div>
+                <div class="doc-item-status">✅ Uploaded</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="back-btn-row">
+        <a href="{{ url_for('citizen.dashboard') }}" class="btn-outline">← Back to Dashboard</a>
+    </div>
+</div>
+
+{% endblock %}

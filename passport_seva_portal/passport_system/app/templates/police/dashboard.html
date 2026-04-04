@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Police Verification Portal{% endblock %}
+{% block content %}
+
+<div class="dashboard-header police-header">
+    <div class="dh-inner">
+        <div>
+            <div class="role-badge">👮 Police Officer Portal</div>
+            <h1>Verification Dashboard</h1>
+            <p>Review ML-verified applications and conduct background checks</p>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <div class="dash-stats">
+        <div class="dash-stat-card">
+            <div class="dsc-icon">📋</div>
+            <div class="dsc-number">{{ stats.pending }}</div>
+            <div class="dsc-label">Pending Review</div>
+        </div>
+        <div class="dash-stat-card success">
+            <div class="dsc-icon">✅</div>
+            <div class="dsc-number">{{ stats.approved }}</div>
+            <div class="dsc-label">Approved</div>
+        </div>
+        <div class="dash-stat-card danger">
+            <div class="dsc-icon">❌</div>
+            <div class="dsc-number">{{ stats.rejected }}</div>
+            <div class="dsc-label">Rejected</div>
+        </div>
+    </div>
+
+    <div class="dash-section">
+        <div class="section-title">
+            <h3>Applications Awaiting Police Verification</h3>
+            <p>Review ML results and conduct background verification</p>
+        </div>
+
+        {% if applications %}
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Application No.</th>
+                        <th>Applicant</th>
+                        <th>Contact</th>
+                        <th>ML Score</th>
+                        <th>ML Status</th>
+                        <th>Tatkaal</th>
+                        <th>Applied</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr class="{{ 'row-tatkaal' if app['tatkaal'] }}">
+                        <td>
+                            <div class="app-no-cell">{{ app['application_number'] }}</div>
+                        </td>
+                        <td>
+                            <div class="applicant-cell">
+                                <div class="applicant-name">{{ app['applicant_name'] }}</div>
+                                <div class="applicant-sub">{{ app['citizen_name'] }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ app['email'] }}</div>
+                            <div class="text-muted">{{ app['phone'] }}</div>
+                        </td>
+                        <td>
+                            {% if app['confidence_score'] %}
+                            <div class="score-pill {{ 'score-high' if app['confidence_score'] > 0.72 else 'score-low' }}">
+                                {{ "%.1f"|format(app['confidence_score'] * 100) }}%
+                            </div>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if app['ml_result'] is not none %}
+                            <span class="badge {{ 'badge-green' if app['ml_result'] else 'badge-orange' }}">
+                                {{ '✅ Passed' if app['ml_result'] else '⚠️ Review' }}
+                            </span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if app['tatkaal'] %}<span class="badge badge-orange">⚡ Tatkaal</span>{% else %}Normal{% endif %}
+                        </td>
+                        <td class="text-muted">{{ app['created_at'][:10] }}</td>
+                        <td>
+                            <a href="{{ url_for('police.review', app_id=app['id']) }}" class="btn-sm">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="es-icon">✅</div>
+            <h3>No Pending Applications</h3>
+            <p>All applications have been reviewed. Check back later.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

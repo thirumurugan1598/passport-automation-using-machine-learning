@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="dashboard-header admin-header">
+    <div class="dh-inner">
+        <div>
+            <div class="role-badge">🛡️ Passport Officer — Admin Panel</div>
+            <h1>Administration Dashboard</h1>
+            <p>Complete oversight of all passport applications</p>
+        </div>
+        <a href="{{ url_for('admin.users') }}" class="btn-outline">👥 Manage Users</a>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Analytics Row -->
+    <div class="admin-analytics">
+        <div class="analytics-card primary">
+            <div class="ac-icon">📋</div>
+            <div class="ac-number">{{ stats.total }}</div>
+            <div class="ac-label">Total Applications</div>
+        </div>
+        <div class="analytics-card warning">
+            <div class="ac-icon">⏳</div>
+            <div class="ac-number">{{ stats.pending_admin }}</div>
+            <div class="ac-label">Pending Approval</div>
+        </div>
+        <div class="analytics-card success">
+            <div class="ac-icon">✅</div>
+            <div class="ac-number">{{ stats.issued }}</div>
+            <div class="ac-label">Passports Issued</div>
+        </div>
+        <div class="analytics-card danger">
+            <div class="ac-icon">❌</div>
+            <div class="ac-number">{{ stats.rejected }}</div>
+            <div class="ac-label">Rejected</div>
+        </div>
+        <div class="analytics-card info">
+            <div class="ac-icon">🔄</div>
+            <div class="ac-number">{{ stats.in_progress }}</div>
+            <div class="ac-label">In Progress</div>
+        </div>
+        <div class="analytics-card orange">
+            <div class="ac-icon">⚡</div>
+            <div class="ac-number">{{ stats.tatkaal }}</div>
+            <div class="ac-label">Tatkaal</div>
+        </div>
+        <div class="analytics-card teal">
+            <div class="ac-icon">👤</div>
+            <div class="ac-number">{{ stats.citizens }}</div>
+            <div class="ac-label">Registered Citizens</div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="dash-section">
+        <div class="section-title">
+            <h3>All Applications</h3>
+        </div>
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterTable('all', this)">All</button>
+            <button class="filter-tab" onclick="filterTable('police_approved', this)">Pending Approval</button>
+            <button class="filter-tab" onclick="filterTable('issued', this)">Issued</button>
+            <button class="filter-tab" onclick="filterTable('submitted', this)">Processing</button>
+            <button class="filter-tab" onclick="filterTable('rejected', this)">Rejected</button>
+        </div>
+
+        {% if applications %}
+        <div class="admin-table-wrap">
+            <table class="admin-table" id="appsTable">
+                <thead>
+                    <tr>
+                        <th>Application No.</th>
+                        <th>Applicant</th>
+                        <th>Type</th>
+                        <th>ML Score</th>
+                        <th>Status</th>
+                        <th>Tatkaal</th>
+                        <th>Applied</th>
+                        <th>Passport No.</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr class="app-row {{ 'row-tatkaal' if app['tatkaal'] }}" data-status="{{ app['status'] }}">
+                        <td><span class="app-no-cell">{{ app['application_number'] }}</span></td>
+                        <td>
+                            <div class="applicant-name">{{ app['applicant_name'] }}</div>
+                            <div class="text-muted">{{ app['citizen_name'] }}</div>
+                        </td>
+                        <td>{{ app['passport_type'] }}</td>
+                        <td>
+                            {% if app['confidence_score'] %}
+                            <span class="score-pill {{ 'score-high' if app['confidence_score'] > 0.72 else 'score-low' }}">
+                                {{ "%.1f"|format(app['confidence_score'] * 100) }}%
+                            </span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            <span class="badge status-badge-sm status-{{ app['status'] }}">
+                                {% set sm = {'submitted':'📤 Submitted','ml_verified':'🤖 ML Done','ml_failed':'⚠️ Review','police_approved':'👮 Police OK','police_rejected':'👮 Rejected','issued':'✅ Issued','admin_rejected':'❌ Rejected'} %}
+                                {{ sm.get(app['status'], app['status'].replace('_',' ').title()) }}
+                            </span>
+                        </td>
+                        <td>{% if app['tatkaal'] %}<span class="badge badge-orange">⚡</span>{% else %}—{% endif %}</td>
+                        <td class="text-muted">{{ app['created_at'][:10] }}</td>
+                        <td>
+                            {% if app['passport_number'] %}
+                            <span class="passport-no">{{ app['passport_number'] }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.review', app_id=app['id']) }}" class="btn-sm">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="es-icon">📋</div>
+            <h3>No Applications Yet</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function filterTable(status, btn) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.app-row').forEach(row => {
+        if (status === 'all') {
+            row.style.display = '';
+        } else if (status === 'rejected') {
+            row.style.display = row.dataset.status.includes('rejected') ? '' : 'none';
+        } else {
+            row.style.display = row.dataset.status === status ? '' : 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

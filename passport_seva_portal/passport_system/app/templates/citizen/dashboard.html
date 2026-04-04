@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="dashboard-header">
+    <div class="dh-inner">
+        <div>
+            <h1>Welcome, {{ session.get('full_name') }}</h1>
+            <p>Manage your passport applications and track status</p>
+        </div>
+        <a href="{{ url_for('citizen.apply') }}" class="btn-primary">+ New Application</a>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Stats Row -->
+    <div class="dash-stats">
+        <div class="dash-stat-card">
+            <div class="dsc-icon">📋</div>
+            <div class="dsc-number">{{ applications|length }}</div>
+            <div class="dsc-label">Total Applications</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dsc-icon">⏳</div>
+            <div class="dsc-number">{{ applications|selectattr('status', 'ne', 'issued')|selectattr('status', 'ne', 'admin_rejected')|list|length }}</div>
+            <div class="dsc-label">In Progress</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dsc-icon">✅</div>
+            <div class="dsc-number">{{ applications|selectattr('status', 'equalto', 'issued')|list|length }}</div>
+            <div class="dsc-label">Passports Issued</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dsc-icon">⚡</div>
+            <div class="dsc-number">{{ applications|selectattr('tatkaal', 'equalto', 1)|list|length }}</div>
+            <div class="dsc-label">Tatkaal Applications</div>
+        </div>
+    </div>
+
+    <!-- Applications Table -->
+    <div class="dash-section">
+        <div class="section-title">
+            <h3>Your Applications</h3>
+        </div>
+        {% if applications %}
+        <div class="applications-list">
+            {% for app in applications %}
+            <div class="app-card {{ 'app-tatkaal' if app['tatkaal'] }}">
+                {% if app['tatkaal'] %}<div class="tatkaal-badge">⚡ TATKAAL</div>{% endif %}
+                <div class="app-card-header">
+                    <div class="app-number">{{ app['application_number'] }}</div>
+                    <div class="app-status-badge status-{{ app['status'] }}">
+                        {% set sm = {
+                            'submitted': '📤 Submitted',
+                            'ml_verified': '🤖 ML Verified',
+                            'ml_failed': '⚠️ Under Review',
+                            'police_approved': '👮 Police Approved',
+                            'police_rejected': '❌ Police Rejected',
+                            'issued': '✅ Passport Issued',
+                            'admin_rejected': '❌ Application Rejected'
+                        } %}
+                        {{ sm.get(app['status'], app['status'].replace('_',' ').title()) }}
+                    </div>
+                </div>
+                <div class="app-card-body">
+                    <div class="app-detail"><span>Applicant</span><strong>{{ app['applicant_name'] }}</strong></div>
+                    <div class="app-detail"><span>Type</span><strong>{{ app['passport_type'] }}</strong></div>
+                    <div class="app-detail"><span>Applied</span><strong>{{ app['created_at'][:10] }}</strong></div>
+                    {% if app['passport_number'] %}
+                    <div class="app-detail highlight"><span>Passport No.</span><strong>🛂 {{ app['passport_number'] }}</strong></div>
+                    {% endif %}
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="app-progress">
+                    {% set progress = {
+                        'submitted': 15,
+                        'ml_verified': 35,
+                        'ml_failed': 20,
+                        'police_approved': 65,
+                        'police_rejected': 100,
+                        'issued': 100,
+                        'admin_rejected': 100
+                    } %}
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if app['status'] in ['issued'] %}fill-green{% elif app['status'] in ['police_rejected','admin_rejected'] %}fill-red{% else %}fill-orange{% endif %}"
+                             style="width: {{ progress.get(app['status'], 10) }}%"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <span class="ps {{ 'done' if app['status'] not in [''] }}">Submit</span>
+                        <span class="ps {{ 'done' if app['status'] not in ['submitted'] }}">ML Check</span>
+                        <span class="ps {{ 'done' if app['status'] in ['police_approved','issued'] }}">Police</span>
+                        <span class="ps {{ 'done' if app['status'] == 'issued' }}">Issued</span>
+                    </div>
+                </div>
+
+                <div class="app-card-footer">
+                    <a href="{{ url_for('citizen.view_application', app_id=app['id']) }}" class="btn-sm-outline">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="es-icon">📋</div>
+            <h3>No Applications Yet</h3>
+            <p>You haven't applied for a passport yet. Click below to get started.</p>
+            <a href="{{ url_for('citizen.apply') }}" class="btn-primary">Apply for Passport</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

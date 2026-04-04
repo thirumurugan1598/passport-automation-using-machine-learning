@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Admin Review — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="page-header admin-header">
+    <div class="page-header-inner">
+        <div>
+            <div class="role-badge">🛡️ Admin — Final Review</div>
+            <h1>Application Review</h1>
+            <p>{{ application['application_number'] }}</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn-outline">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="review-container">
+    <div class="review-left">
+        <div class="detail-card">
+            <h3>Applicant Information</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>Full Name</span><strong>{{ application['applicant_name'] }}</strong></div>
+                <div class="info-row"><span>Date of Birth</span><strong>{{ application['dob'] }}</strong></div>
+                <div class="info-row"><span>Gender</span><strong>{{ application['gender'] }}</strong></div>
+                <div class="info-row"><span>Nationality</span><strong>{{ application['nationality'] }}</strong></div>
+                <div class="info-row"><span>Father's Name</span><strong>{{ application['father_name'] }}</strong></div>
+                <div class="info-row"><span>Mother's Name</span><strong>{{ application['mother_name'] }}</strong></div>
+                {% if application['spouse_name'] %}<div class="info-row"><span>Spouse</span><strong>{{ application['spouse_name'] }}</strong></div>{% endif %}
+                <div class="info-row"><span>Address</span><strong>{{ application['address'] }}, {{ application['city'] }}, {{ application['state'] }} - {{ application['pincode'] }}</strong></div>
+                <div class="info-row"><span>Aadhaar</span><strong>{{ application['aadhaar'][:4] }}XXXX{{ application['aadhaar'][-4:] }}</strong></div>
+                <div class="info-row"><span>Contact</span><strong>{{ application['phone'] }}</strong></div>
+                <div class="info-row"><span>Email</span><strong>{{ application['email'] }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Full Verification History -->
+        <div class="detail-card">
+            <h3>Verification History</h3>
+            {% for log in logs %}
+            <div class="log-entry {{ 'log-pass' if log['result'] else 'log-fail' }}">
+                <div class="log-header">
+                    <span class="log-type-badge">
+                        {{ '🤖 ML Auto' if log['verification_type']=='ml_auto' else '👮 Police' if log['verification_type']=='police_manual' else '🛡️ Admin' }}
+                    </span>
+                    <span class="log-time">{{ log['verified_at'][:16] }}</span>
+                </div>
+                {% if log['confidence_score'] %}
+                <div class="log-score-row">
+                    <span>Confidence: {{ "%.1f"|format(log['confidence_score']*100) }}%</span>
+                    <span class="{{ 'text-green' if log['result'] else 'text-red' }}">{{ '✅ Passed' if log['result'] else '❌ Failed' }}</span>
+                </div>
+                {% endif %}
+                {% if log['details'] and log['details']|length < 300 %}
+                <div class="log-details">{{ log['details'] }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if documents %}
+        <div class="detail-card">
+            <h3>Documents</h3>
+            <div class="docs-grid">
+                {% for doc in documents %}
+                <div class="doc-item">
+                    <div class="doc-item-icon">{% if doc['doc_type']=='photo' %}🤳{% elif doc['doc_type']=='aadhaar_doc' %}🪪{% elif doc['doc_type']=='address_proof' %}🏠{% else %}📜{% endif %}</div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name">{{ doc['doc_type'].replace('_',' ').title() }}</div>
+                        <div class="doc-item-file">{{ doc['original_filename'] }}</div>
+                    </div>
+                    <div class="doc-item-status">✅</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="review-right">
+        {% if application['status'] == 'issued' %}
+        <div class="detail-card issued-card">
+            <div class="issued-icon">🛂</div>
+            <h3>Passport Issued</h3>
+            <div class="passport-display">
+                <div class="pd-number">{{ application['passport_number'] }}</div>
+                <div class="pd-label">Passport Number</div>
+            </div>
+            <div class="info-row"><span>Issued On</span><strong>{{ application['passport_issued_at'][:10] if application['passport_issued_at'] }}</strong></div>
+            <div class="info-row"><span>Admin Remarks</span><strong>{{ application['admin_remarks'] or '—' }}</strong></div>
+        </div>
+
+        {% elif application['status'] in ['admin_rejected', 'police_rejected'] %}
+        <div class="detail-card rejected-card">
+            <div class="rejected-icon">❌</div>
+            <h3>Application Rejected</h3>
+            <div class="info-row"><span>Remarks</span><strong>{{ application['admin_remarks'] or application['police_remarks'] or '—' }}</strong></div>
+        </div>
+
+        {% elif application['status'] == 'police_approved' %}
+        <div class="decision-card">
+            <h3>🛡️ Final Admin Decision</h3>
+            <p>Police verification has been completed. Issue or reject this passport application.</p>
+
+            <div class="police-verdict">
+                <span class="badge badge-green">👮 Police: Approved</span>
+                {% if application['police_remarks'] %}
+                <p class="police-remarks">Police Remarks: {{ application['police_remarks'] }}</p>
+                {% endif %}
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.approve', app_id=application['id']) }}">
+                <div class="form-group">
+                    <label>Admin Remarks</label>
+                    <textarea name="remarks" class="form-textarea" rows="4"
+                              placeholder="Final remarks for this application..."></textarea>
+                </div>
+                <div class="decision-actions">
+                    <button type="submit" name="decision" value="approve" class="btn-decision btn-approve"
+                            onclick="return confirm('Issue passport for this application?')">
+                        🛂 Issue Passport
+                    </button>
+                    <button type="submit" name="decision" value="reject" class="btn-decision btn-reject"
+                            onclick="return confirmReject()">
+                        ❌ Reject Application
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="detail-card info-card">
+            <div class="info-icon">ℹ️</div>
+            <h3>Application In Progress</h3>
+            <p>Current Status: <strong>{{ application['status'].replace('_',' ').title() }}</strong></p>
+            <p>This application is still being processed through the verification pipeline.</p>
+        </div>
+        {% endif %}
+
+        <div class="detail-card">
+            <h3>Application Summary</h3>
+            <div class="info-grid">
+                <div class="info-row"><span>App Number</span><strong>{{ application['application_number'] }}</strong></div>
+                <div class="info-row"><span>Type</span><strong>{{ application['passport_type'] }}</strong></div>
+                <div class="info-row"><span>Tatkaal</span><strong>{{ '⚡ Yes' if application['tatkaal'] else 'No' }}</strong></div>
+                <div class="info-row"><span>Applied On</span><strong>{{ application['created_at'][:10] }}</strong></div>
+                <div class="info-row"><span>Police Status</span>
+                    <strong class="{{ 'text-green' if application['police_status']=='approved' else 'text-red' if application['police_status']=='rejected' else '' }}">
+                        {{ application['police_status'].title() }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function confirmReject() {
+    const r = document.querySelector('textarea[name="remarks"]').value.trim();
+    if (!r) { alert('Please enter rejection reason.'); return false; }
+    return confirm('Are you sure you want to REJECT this application?');
+}
+</script>
+{% endblock %}

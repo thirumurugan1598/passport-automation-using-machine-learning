@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Track Application — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div class="page-header-inner">
+        <h1>Track Your Application</h1>
+        <p>Enter your Application Number to check real-time status</p>
+    </div>
+</div>
+
+<div class="track-container">
+    <div class="track-form-card">
+        <div class="track-icon">🔍</div>
+        <h2>Application Status Check</h2>
+        <form method="POST" action="{{ url_for('main.track') }}" class="track-form">
+            <div class="form-group">
+                <label>Application Number</label>
+                <input type="text" name="application_number" placeholder="e.g. IND2025ABCD1234"
+                       class="form-input track-input" value="{{ request.form.get('application_number','') }}"
+                       required style="text-transform: uppercase;">
+                <small>Format: INDYEARXXXXXXXX</small>
+            </div>
+            <button type="submit" class="btn-primary full-width">Check Status</button>
+        </form>
+    </div>
+
+    {% if application %}
+    <div class="track-result">
+        <div class="result-header">
+            <div class="result-app-no">
+                <span>Application No.</span>
+                <strong>{{ application['application_number'] }}</strong>
+            </div>
+            <div class="status-badge status-{{ application['status'] }}">
+                {% set status_map = {
+                    'submitted': '📤 Submitted',
+                    'ml_verified': '🤖 ML Verified',
+                    'ml_failed': '⚠️ Under Review',
+                    'police_approved': '👮 Police Approved',
+                    'police_rejected': '❌ Police Rejected',
+                    'issued': '✅ Issued',
+                    'admin_rejected': '❌ Rejected'
+                } %}
+                {{ status_map.get(application['status'], application['status'].title()) }}
+            </div>
+        </div>
+
+        <!-- Progress Timeline -->
+        <div class="status-timeline">
+            {% set steps = [
+                ('submitted', '📤', 'Application Submitted'),
+                ('ml_verified', '🤖', 'ML Verification'),
+                ('police_approved', '👮', 'Police Verification'),
+                ('issued', '✅', 'Passport Issued')
+            ] %}
+            {% set current_status = application['status'] %}
+            {% set status_order = ['submitted', 'ml_verified', 'ml_failed', 'police_review', 'police_approved', 'issued'] %}
+
+            {% for step_status, icon, label in steps %}
+            {% set is_done = (
+                (step_status == 'submitted') or
+                (step_status == 'ml_verified' and current_status not in ['submitted']) or
+                (step_status == 'police_approved' and current_status in ['police_approved', 'issued']) or
+                (step_status == 'issued' and current_status == 'issued')
+            ) %}
+            {% set is_current = (
+                (step_status == 'submitted' and current_status == 'submitted') or
+                (step_status == 'ml_verified' and current_status in ['ml_verified', 'ml_failed', 'police_approved']) or
+                (step_status == 'police_approved' and current_status == 'police_approved') or
+                (step_status == 'issued' and current_status == 'issued')
+            ) %}
+            <div class="timeline-step {{ 'done' if is_done else '' }} {{ 'current' if is_current else '' }}">
+                <div class="tl-dot">{{ icon }}</div>
+                <div class="tl-label">{{ label }}</div>
+            </div>
+            {% if not loop.last %}
+            <div class="tl-line {{ 'done' if is_done else '' }}"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Application Details -->
+        <div class="result-details">
+            <div class="detail-section">
+                <h4>Applicant Information</h4>
+                <div class="detail-grid">
+                    <div class="detail-item"><span>Name</span><strong>{{ application['applicant_name'] }}</strong></div>
+                    <div class="detail-item"><span>Date of Birth</span><strong>{{ application['dob'] }}</strong></div>
+                    <div class="detail-item"><span>Passport Type</span><strong>{{ application['passport_type'] }}</strong></div>
+                    <div class="detail-item"><span>Tatkaal</span><strong>{{ 'Yes ⚡' if application['tatkaal'] else 'No' }}</strong></div>
+                    <div class="detail-item"><span>Applied On</span><strong>{{ application['created_at'][:10] }}</strong></div>
+                    {% if application['passport_number'] %}
+                    <div class="detail-item highlight"><span>Passport Number</span><strong>🛂 {{ application['passport_number'] }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if logs %}
+            <div class="detail-section">
+                <h4>Verification History</h4>
+                {% for log in logs %}
+                <div class="log-entry {{ 'log-pass' if log['result'] else 'log-fail' }}">
+                    <div class="log-type">
+                        {{ '🤖 ML Auto-Verification' if log['verification_type'] == 'ml_auto' else
+                           '👮 Police Manual Verification' if log['verification_type'] == 'police_manual' else
+                           '✅ Admin Final Decision' if log['verification_type'] == 'admin_final' else
+                           log['verification_type'] }}
+                    </div>
+                    <div class="log-score">Score: {{ "%.1f"|format(log['confidence_score'] * 100) }}%</div>
+                    <div class="log-time">{{ log['verified_at'][:16] }}</div>
+                    <div class="log-result {{ 'pass' if log['result'] else 'fail' }}">
+                        {{ '✅ Passed' if log['result'] else '❌ Failed/Rejected' }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% elif request.method == 'POST' %}
+    <div class="track-not-found">
+        <div class="nf-icon">🔎</div>
+        <h3>Application Not Found</h3>
+        <p>No application found with that number. Please verify the application number and try again.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

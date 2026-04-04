@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% block title %}Apply for Passport — Passport Seva Portal{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div class="page-header-inner">
+        <h1>Passport Application Form</h1>
+        <p>Fill in all details carefully. Fields marked * are mandatory.</p>
+    </div>
+</div>
+
+<div class="apply-container">
+    <div class="apply-sidebar">
+        <div class="sidebar-steps">
+            <div class="sidebar-step active" data-section="personal">
+                <div class="ss-num">1</div>
+                <div class="ss-label">Personal Info</div>
+            </div>
+            <div class="sidebar-step" data-section="family">
+                <div class="ss-num">2</div>
+                <div class="ss-label">Family Details</div>
+            </div>
+            <div class="sidebar-step" data-section="passport">
+                <div class="ss-num">3</div>
+                <div class="ss-label">Passport Type</div>
+            </div>
+            <div class="sidebar-step" data-section="documents">
+                <div class="ss-num">4</div>
+                <div class="ss-label">Documents</div>
+            </div>
+        </div>
+        <div class="apply-info-box">
+            <h4>🤖 ML Verification</h4>
+            <p>Your documents will be automatically verified using our AI system immediately after submission.</p>
+        </div>
+        <div class="apply-info-box warning">
+            <h4>⚠️ Important</h4>
+            <ul>
+                <li>Use details matching your Aadhaar card</li>
+                <li>Upload clear, readable documents</li>
+                <li>Max file size: 5MB per document</li>
+                <li>Accepted formats: PDF, JPG, PNG</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="apply-main">
+        <form method="POST" action="{{ url_for('citizen.apply') }}" enctype="multipart/form-data" id="applyForm">
+
+            <!-- Section 1: Personal Information -->
+            <div class="form-section active" id="section-personal">
+                <div class="form-section-header">
+                    <h2>Personal Information</h2>
+                    <p>Enter your details exactly as on Aadhaar card</p>
+                </div>
+
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label>Full Name * <small>(as per Aadhaar)</small></label>
+                        <input type="text" name="applicant_name" class="form-input"
+                               placeholder="Rajesh Kumar Singh" required
+                               value="{{ form_data.get('applicant_name', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth *</label>
+                        <input type="date" name="dob" class="form-input" required
+                               value="{{ form_data.get('dob', '') }}" max="2010-01-01">
+                    </div>
+                </div>
+
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label>Gender *</label>
+                        <select name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male" {{ 'selected' if form_data.get('gender')=='Male' }}>Male</option>
+                            <option value="Female" {{ 'selected' if form_data.get('gender')=='Female' }}>Female</option>
+                            <option value="Transgender" {{ 'selected' if form_data.get('gender')=='Transgender' }}>Transgender</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Emergency Contact Number</label>
+                        <input type="tel" name="emergency_contact" class="form-input"
+                               placeholder="9876543210" maxlength="10"
+                               value="{{ form_data.get('emergency_contact', '') }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Residential Address *</label>
+                    <textarea name="address" class="form-textarea" rows="3"
+                              placeholder="House No., Street Name, Locality" required>{{ form_data.get('address', '') }}</textarea>
+                </div>
+
+                <div class="form-row three-col">
+                    <div class="form-group">
+                        <label>City *</label>
+                        <input type="text" name="city" class="form-input"
+                               placeholder="Mumbai" required
+                               value="{{ form_data.get('city', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>State *</label>
+                        <select name="state" class="form-select" required>
+                            <option value="">Select State</option>
+                            {% for state in ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh','Puducherry'] %}
+                            <option value="{{ state }}" {{ 'selected' if form_data.get('state')==state }}>{{ state }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pincode *</label>
+                        <input type="text" name="pincode" class="form-input"
+                               placeholder="400001" maxlength="6" pattern="\d{6}" required
+                               value="{{ form_data.get('pincode', '') }}">
+                    </div>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn-primary" onclick="nextSection('personal','family')">Next: Family Details →</button>
+                </div>
+            </div>
+
+            <!-- Section 2: Family Details -->
+            <div class="form-section" id="section-family">
+                <div class="form-section-header">
+                    <h2>Family Details</h2>
+                    <p>Parent and spouse information</p>
+                </div>
+
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label>Father's Name *</label>
+                        <input type="text" name="father_name" class="form-input"
+                               placeholder="Suresh Kumar Singh" required
+                               value="{{ form_data.get('father_name', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Mother's Name *</label>
+                        <input type="text" name="mother_name" class="form-input"
+                               placeholder="Sunita Devi Singh" required
+                               value="{{ form_data.get('mother_name', '') }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Spouse Name <small>(if married)</small></label>
+                    <input type="text" name="spouse_name" class="form-input"
+                           placeholder="Leave blank if not applicable"
+                           value="{{ form_data.get('spouse_name', '') }}">
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn-outline" onclick="prevSection('family','personal')">← Back</button>
+                    <button type="button" class="btn-primary" onclick="nextSection('family','passport')">Next: Passport Type →</button>
+                </div>
+            </div>
+
+            <!-- Section 3: Passport Type -->
+            <div class="form-section" id="section-passport">
+                <div class="form-section-header">
+                    <h2>Passport Type & Category</h2>
+                    <p>Select the type of passport you are applying for</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Passport Type *</label>
+                    <div class="passport-type-cards">
+                        <label class="type-card">
+                            <input type="radio" name="passport_type" value="Fresh Passport" required
+                                   {{ 'checked' if form_data.get('passport_type')=='Fresh Passport' }}>
+                            <div class="type-card-inner">
+                                <div class="type-icon">🆕</div>
+                                <h4>Fresh Passport</h4>
+                                <p>First-time applicant with no existing passport</p>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="passport_type" value="Re-issue"
+                                   {{ 'checked' if form_data.get('passport_type')=='Re-issue' }}>
+                            <div class="type-card-inner">
+                                <div class="type-icon">🔄</div>
+                                <h4>Re-issue / Renewal</h4>
+                                <p>Renewal of expired or expiring passport</p>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="passport_type" value="Duplicate"
+                                   {{ 'checked' if form_data.get('passport_type')=='Duplicate' }}>
+                            <div class="type-card-inner">
+                                <div class="type-icon">📄</div>
+                                <h4>Duplicate Passport</h4>
+                                <p>Lost, damaged, or stolen passport replacement</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Existing Passport Number <small>(if applicable)</small></label>
+                    <input type="text" name="existing_passport" class="form-input"
+                           placeholder="e.g. A1234567"
+                           value="{{ form_data.get('existing_passport', '') }}">
+                </div>
+
+                <div class="form-group">
+                    <div class="tatkaal-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="tatkaal" id="tatkaalToggle"
+                                   {{ 'checked' if form_data.get('tatkaal') }}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div class="tatkaal-info">
+                            <strong>⚡ Apply under Tatkaal Scheme</strong>
+                            <p>Express processing in 3 working days. Additional fee applies. Use only for urgent travel needs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn-outline" onclick="prevSection('passport','family')">← Back</button>
+                    <button type="button" class="btn-primary" onclick="nextSection('passport','documents')">Next: Documents →</button>
+                </div>
+            </div>
+
+            <!-- Section 4: Document Upload -->
+            <div class="form-section" id="section-documents">
+                <div class="form-section-header">
+                    <h2>Document Upload</h2>
+                    <p>Upload clear copies. These will be verified by our ML system.</p>
+                </div>
+
+                <div class="doc-upload-grid">
+                    <div class="doc-upload-item">
+                        <label class="doc-upload-label" for="photo">
+                            <div class="doc-icon">🤳</div>
+                            <div class="doc-name">Passport Photo *</div>
+                            <div class="doc-hint">White background, clear face</div>
+                            <div class="doc-formats">JPG, PNG — max 2MB</div>
+                        </label>
+                        <input type="file" name="photo" id="photo" accept=".jpg,.jpeg,.png"
+                               class="doc-file-input" onchange="showFileName(this)">
+                        <div class="file-name-display" id="photo-name">No file chosen</div>
+                    </div>
+
+                    <div class="doc-upload-item">
+                        <label class="doc-upload-label" for="aadhaar_doc">
+                            <div class="doc-icon">🪪</div>
+                            <div class="doc-name">Aadhaar Card *</div>
+                            <div class="doc-hint">Both sides</div>
+                            <div class="doc-formats">PDF, JPG, PNG — max 5MB</div>
+                        </label>
+                        <input type="file" name="aadhaar_doc" id="aadhaar_doc" accept=".pdf,.jpg,.jpeg,.png"
+                               class="doc-file-input" onchange="showFileName(this)">
+                        <div class="file-name-display" id="aadhaar_doc-name">No file chosen</div>
+                    </div>
+
+                    <div class="doc-upload-item">
+                        <label class="doc-upload-label" for="address_proof">
+                            <div class="doc-icon">🏠</div>
+                            <div class="doc-name">Address Proof</div>
+                            <div class="doc-hint">Utility bill, bank statement</div>
+                            <div class="doc-formats">PDF, JPG, PNG — max 5MB</div>
+                        </label>
+                        <input type="file" name="address_proof" id="address_proof" accept=".pdf,.jpg,.jpeg,.png"
+                               class="doc-file-input" onchange="showFileName(this)">
+                        <div class="file-name-display" id="address_proof-name">No file chosen</div>
+                    </div>
+
+                    <div class="doc-upload-item">
+                        <label class="doc-upload-label" for="birth_certificate">
+                            <div class="doc-icon">📜</div>
+                            <div class="doc-name">Birth Certificate</div>
+                            <div class="doc-hint">Municipal certificate or school record</div>
+                            <div class="doc-formats">PDF, JPG, PNG — max 5MB</div>
+                        </label>
+                        <input type="file" name="birth_certificate" id="birth_certificate" accept=".pdf,.jpg,.jpeg,.png"
+                               class="doc-file-input" onchange="showFileName(this)">
+                        <div class="file-name-display" id="birth_certificate-name">No file chosen</div>
+                    </div>
+                </div>
+
+                <div class="declaration-box">
+                    <input type="checkbox" id="declaration" required>
+                    <label for="declaration">
+                        I hereby declare that the information provided above is true and correct to the best of my knowledge. I understand that furnishing false information is a punishable offence under the Indian Passport Act, 1967.
+                    </label>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn-outline" onclick="prevSection('documents','passport')">← Back</button>
+                    <button type="submit" class="btn-primary btn-submit" id="submitBtn">
+                        <span class="submit-text">Submit Application & Start ML Verification</span>
+                        <span class="submit-loading" style="display:none">🤖 Processing...</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function nextSection(from, to) {
+    document.getElementById('section-' + from).classList.remove('active');
+    document.getElementById('section-' + to).classList.add('active');
+    document.querySelector(`[data-section="${from}"]`).classList.remove('active');
+    document.querySelector(`[data-section="${from}"]`).classList.add('done');
+    document.querySelector(`[data-section="${to}"]`).classList.add('active');
+    window.scrollTo(0, 0);
+}
+function prevSection(from, to) {
+    document.getElementById('section-' + from).classList.remove('active');
+    document.getElementById('section-' + to).classList.add('active');
+    document.querySelector(`[data-section="${from}"]`).classList.remove('active');
+    document.querySelector(`[data-section="${to}"]`).classList.remove('done');
+    document.querySelector(`[data-section="${to}"]`).classList.add('active');
+    window.scrollTo(0, 0);
+}
+function showFileName(input) {
+    const name = input.files[0]?.name || 'No file chosen';
+    document.getElementById(input.id + '-name').textContent = name;
+    input.parentElement.querySelector('.doc-upload-label').classList.add('has-file');
+}
+document.getElementById('applyForm').addEventListener('submit', function() {
+    document.querySelector('.submit-text').style.display = 'none';
+    document.querySelector('.submit-loading').style.display = 'inline';
+    document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}
